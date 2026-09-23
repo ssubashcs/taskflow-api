@@ -1,4 +1,7 @@
 
+using Microsoft.EntityFrameworkCore;
+using TaskFlow.Api.Data;
+
 namespace TaskFlow.Api
 {
     public class Program
@@ -12,6 +15,11 @@ namespace TaskFlow.Api
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+
+            // Register the dbContext to connect to the SQL Server database.
+            // DI manages the creation and delivery of TaskFlowDbContext to classes that depend on it.
+            builder.Services.AddDbContext<TaskFlowDbContext>(optionsBuilder => optionsBuilder.UseSqlServer(
+                                                                builder.Configuration.GetConnectionString("TaskFlowDatabase")));
 
             var app = builder.Build();
 
