@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TaskFlow.Api.Data;
 using TaskFlow.Api.Models;
 
 namespace TaskFlow.Api.Controllers
@@ -7,26 +9,27 @@ namespace TaskFlow.Api.Controllers
     [ApiController]
     public class TasksController : ControllerBase
     {
-        private static readonly List<TaskItem> Tasks = new()
+        private readonly TaskFlowDbContext _dbContext;
+
+        // ASP.NET Core's DI container creates and injects the DbContext instance here.
+        public TasksController(TaskFlowDbContext dbContext) 
         {
-            new TaskItem
-            {
-                Id = 1,
-                Title = "Learn ASP.NET Core",
-                IsCompleted = false
-            }
-        };
+            _dbContext = dbContext;
+        }
 
         [HttpGet]
-        public ActionResult<List<TaskItem>> GetAll()
+        public async Task<ActionResult<List<TaskItem>>> GetAll()
         {
-            return Ok(Tasks);
+            // Don't track changes for read-only queries.
+            var tasks = await _dbContext.Tasks.AsNoTracking().ToListAsync();
+        
+            return Ok(tasks);
         }
 
         [HttpGet("{id:int}", Name = "GetTaskById")]
-        public ActionResult<TaskItem> GetById(int id)
+        public async Task<ActionResult<TaskItem>> GetById(int id)
         {
-            var task = Tasks.FirstOrDefault(task => task.Id == id);
+            var task = await _dbContext.Tasks.FindAsync(id);
 
             if (task is null) return NotFound();
 
@@ -34,20 +37,21 @@ namespace TaskFlow.Api.Controllers
         }
 
         [HttpPost]
-        public ActionResult<TaskItem> Create(TaskItem task)
+        public async Task<ActionResult<TaskItem>> Create(TaskItem task)
         {
-            task.Id = Tasks.Count == 0 ? 1 : Tasks.Max(existingTask => existingTask.Id) + 1;
+            _dbContext.Add(task);
 
-            Tasks.Add(task);
+            await _dbContext.SaveChangesAsync();
 
             return CreatedAtRoute("GetTaskById", new { id = task.Id }, task);
         }
 
         // IActionResult represents an HTTP response produced by a controller action.
         [HttpPut("{id:int}")]
-        public IActionResult Update(int id, TaskItem updatedTask)
+        public async Task<IActionResult> Update(int id, TaskItem updatedTask)
         {
-            var existingTask = Tasks.FirstOrDefault(task => task.Id == id);
+            // reference to the tracked entity object retrieved by ef core
+            var existingTask = await _dbContext.Tasks.FindAsync(id);
 
             if (existingTask is null)
             {
@@ -57,20 +61,23 @@ namespace TaskFlow.Api.Controllers
             existingTask.Title = updatedTask.Title;
             existingTask.IsCompleted = updatedTask.IsCompleted;
 
+            await _dbContext.SaveChangesAsync();
+
             return NoContent();
         }
 
         [HttpDelete("{id:int}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var task = Tasks.FirstOrDefault(task => task.Id == id);
+            var task = await _dbContext.Tasks.FindAsync(id);
 
             if (task is null)
             {
                 return NotFound();
             }
 
-            Tasks.Remove(task);
+            _dbContext.Tasks.Remove(task);
+            await _dbContext.SaveChangesAsync();
 
             return NoContent();
         }

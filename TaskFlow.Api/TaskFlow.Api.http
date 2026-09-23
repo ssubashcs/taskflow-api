@@ -4,11 +4,14 @@ GET {{TaskFlow.Api_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+GET https://localhost:7152/api/tasks
+
+###
 POST https://localhost:7152/api/tasks
 Content-Type: application/json
 
 {
-  "title": "Build my first API",
+  "title": "Write Unit Tests",
   "isCompleted": false
 }
 
