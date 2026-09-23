@@ -1,0 +1,28 @@
+@TaskFlow.Api_HostAddress = http://localhost:5188
+
+GET {{TaskFlow.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+POST https://localhost:7152/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Build my first API",
+  "isCompleted": false
+}
+
+###
+GET https://localhost:7152/api/tasks/1
+
+###
+PUT https://localhost:7152/api/tasks/1
+Content-Type: application/json
+
+{
+  "title": "Build and test my first API",
+  "isCompleted": true
+}
+
+###
+DELETE https://localhost:7152/api/tasks/1
