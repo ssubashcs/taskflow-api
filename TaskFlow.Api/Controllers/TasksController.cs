@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Api.Data;
+using TaskFlow.Api.Dtos;
 using TaskFlow.Api.Models;
 
 namespace TaskFlow.Api.Controllers
@@ -18,37 +19,48 @@ namespace TaskFlow.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<TaskItem>>> GetAll()
+        public async Task<ActionResult<List<TaskResponseDto>>> GetAll()
         {
-            // Don't track changes for read-only queries.
-            var tasks = await _dbContext.Tasks.AsNoTracking().ToListAsync();
+            var tasks = await _dbContext.Tasks.AsNoTracking() // Don't track changes for read-only queries.
+                                              .Select(task => new TaskResponseDto
+                                              {
+                                                  Id = task.Id,
+                                                  Title = task.Title,
+                                                  IsCompleted = task.IsCompleted
+                                              })
+                                              .ToListAsync();
         
             return Ok(tasks);
         }
 
         [HttpGet("{id:int}", Name = "GetTaskById")]
-        public async Task<ActionResult<TaskItem>> GetById(int id)
+        public async Task<ActionResult<TaskResponseDto>> GetById(int id)
         {
             var task = await _dbContext.Tasks.FindAsync(id);
 
             if (task is null) return NotFound();
 
-            return Ok(task);
+            return Ok(ToResponseDto(task));
         }
 
         [HttpPost]
-        public async Task<ActionResult<TaskItem>> Create(TaskItem task)
+        public async Task<ActionResult<TaskResponseDto>> Create(TaskCreateDto taskDto)
         {
-            _dbContext.Add(task);
+            TaskItem task = new()
+            {
+                Title = taskDto.Title,
+                IsCompleted = false
+            };
 
+            _dbContext.Add(task);
             await _dbContext.SaveChangesAsync();
 
-            return CreatedAtRoute("GetTaskById", new { id = task.Id }, task);
+            return CreatedAtRoute("GetTaskById", new { id = task.Id }, ToResponseDto(task));
         }
 
         // IActionResult represents an HTTP response produced by a controller action.
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, TaskItem updatedTask)
+        public async Task<IActionResult> Update(int id, TaskUpdateDto taskDto)
         {
             // reference to the tracked entity object retrieved by ef core
             var existingTask = await _dbContext.Tasks.FindAsync(id);
@@ -58,8 +70,8 @@ namespace TaskFlow.Api.Controllers
                 return NotFound();
             }
 
-            existingTask.Title = updatedTask.Title;
-            existingTask.IsCompleted = updatedTask.IsCompleted;
+            existingTask.Title = taskDto.Title;
+            existingTask.IsCompleted = taskDto.IsCompleted;
 
             await _dbContext.SaveChangesAsync();
 
@@ -80,6 +92,16 @@ namespace TaskFlow.Api.Controllers
             await _dbContext.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        private static TaskResponseDto ToResponseDto(TaskItem task)
+        {
+            return new TaskResponseDto
+            {
+                Id = task.Id,
+                Title = task.Title,
+                IsCompleted = task.IsCompleted
+            };
         }
     }
 }

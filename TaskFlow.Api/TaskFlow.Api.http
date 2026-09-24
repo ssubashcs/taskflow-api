@@ -11,15 +11,15 @@ POST https://localhost:7152/api/tasks
 Content-Type: application/json
 
 {
-  "title": "Write Unit Tests",
-  "isCompleted": false
+  "title": "Connect API with the SQL server",
+  "isCompleted": true
 }
 
 ###
 GET https://localhost:7152/api/tasks/1
 
 ###
-PUT https://localhost:7152/api/tasks/1
+PUT https://localhost:7152/api/tasks/3
 Content-Type: application/json
 
 {
