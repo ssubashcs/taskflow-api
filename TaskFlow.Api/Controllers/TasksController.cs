@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TaskFlow.Api.Data;
 using TaskFlow.Api.Dtos;
 using TaskFlow.Api.Models;
+using TaskFlow.Api.Services;
 
 namespace TaskFlow.Api.Controllers
 {
@@ -10,25 +11,18 @@ namespace TaskFlow.Api.Controllers
     [ApiController]
     public class TasksController : ControllerBase
     {
-        private readonly TaskFlowDbContext _dbContext;
+        private readonly ITaskService _taskService;
 
-        // ASP.NET Core's DI container creates and injects the DbContext instance here.
-        public TasksController(TaskFlowDbContext dbContext) 
+        // ASP.NET Core's DI container creates and injects the ITaskService implementation here.
+        public TasksController(ITaskService taskService) 
         {
-            _dbContext = dbContext;
+            _taskService = taskService;
         }
 
         [HttpGet]
         public async Task<ActionResult<List<TaskResponseDto>>> GetAll()
         {
-            var tasks = await _dbContext.Tasks.AsNoTracking() // Don't track changes for read-only queries.
-                                              .Select(task => new TaskResponseDto
-                                              {
-                                                  Id = task.Id,
-                                                  Title = task.Title,
-                                                  IsCompleted = task.IsCompleted
-                                              })
-                                              .ToListAsync();
+            var tasks = await _taskService.GetAllAsync();
         
             return Ok(tasks);
         }
@@ -36,44 +30,28 @@ namespace TaskFlow.Api.Controllers
         [HttpGet("{id:int}", Name = "GetTaskById")]
         public async Task<ActionResult<TaskResponseDto>> GetById(int id)
         {
-            var task = await _dbContext.Tasks.FindAsync(id);
+            var task = await _taskService.GetByIdAsync(id);
 
             if (task is null) return NotFound();
 
-            return Ok(ToResponseDto(task));
+            return Ok(task);
         }
 
         [HttpPost]
         public async Task<ActionResult<TaskResponseDto>> Create(TaskCreateDto taskDto)
         {
-            TaskItem task = new()
-            {
-                Title = taskDto.Title,
-                IsCompleted = false
-            };
+            var task = await _taskService.CreateAsync(taskDto);
 
-            _dbContext.Add(task);
-            await _dbContext.SaveChangesAsync();
-
-            return CreatedAtRoute("GetTaskById", new { id = task.Id }, ToResponseDto(task));
+            return CreatedAtRoute("GetTaskById", new { id = task.Id }, task);
         }
 
         // IActionResult represents an HTTP response produced by a controller action.
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, TaskUpdateDto taskDto)
         {
-            // reference to the tracked entity object retrieved by ef core
-            var existingTask = await _dbContext.Tasks.FindAsync(id);
+            bool updated = await _taskService.UpdateAsync(id, taskDto);
 
-            if (existingTask is null)
-            {
-                return NotFound();
-            }
-
-            existingTask.Title = taskDto.Title;
-            existingTask.IsCompleted = taskDto.IsCompleted;
-
-            await _dbContext.SaveChangesAsync();
+            if (!updated) return NotFound();
 
             return NoContent();
         }
@@ -81,27 +59,11 @@ namespace TaskFlow.Api.Controllers
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var task = await _dbContext.Tasks.FindAsync(id);
+            bool deleted = await _taskService.DeleteAsync(id);
 
-            if (task is null)
-            {
-                return NotFound();
-            }
-
-            _dbContext.Tasks.Remove(task);
-            await _dbContext.SaveChangesAsync();
+            if (!deleted) return NotFound();
 
             return NoContent();
-        }
-
-        private static TaskResponseDto ToResponseDto(TaskItem task)
-        {
-            return new TaskResponseDto
-            {
-                Id = task.Id,
-                Title = task.Title,
-                IsCompleted = task.IsCompleted
-            };
         }
     }
 }

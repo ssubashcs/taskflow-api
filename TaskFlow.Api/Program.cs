@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Api.Data;
+using TaskFlow.Api.Services;
 
 namespace TaskFlow.Api
 {
@@ -20,6 +21,9 @@ namespace TaskFlow.Api
             // DI manages the creation and delivery of TaskFlowDbContext to classes that depend on it.
             builder.Services.AddDbContext<TaskFlowDbContext>(optionsBuilder => optionsBuilder.UseSqlServer(
                                                                 builder.Configuration.GetConnectionString("TaskFlowDatabase")));
+
+            // Register TaskService as the implementation for ITaskService with scoped lifetime.                                                                
+            builder.Services.AddScoped<ITaskService, TaskService>();
 
             var app = builder.Build();
 

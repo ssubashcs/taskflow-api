@@ -11,7 +11,7 @@ POST https://localhost:7152/api/tasks
 Content-Type: application/json
 
 {
-  "title": "Connect API with the SQL server",
+  "title": "Test2",
   "isCompleted": true
 }
 
@@ -19,13 +19,13 @@ Content-Type: application/json
 GET https://localhost:7152/api/tasks/1
 
 ###
-PUT https://localhost:7152/api/tasks/3
+PUT https://localhost:7152/api/tasks/4
 Content-Type: application/json
 
 {
-  "title": "Build and test my first API",
+  "title": "Introduce the service layer",
   "isCompleted": true
 }
 
 ###
-DELETE https://localhost:7152/api/tasks/1
+DELETE https://localhost:7152/api/tasks/6
