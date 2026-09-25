@@ -29,3 +29,12 @@ Content-Type: application/json
 
 ###
 DELETE https://localhost:7152/api/tasks/6
+
+###
+POST https://localhost:7152/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "learner@example.com",
+  "password": "LearningPassword123!"
+}

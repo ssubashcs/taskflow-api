@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TaskFlow.Api.Data;
 using TaskFlow.Api.Dtos;
-using TaskFlow.Api.Models;
 using TaskFlow.Api.Services;
 
 namespace TaskFlow.Api.Controllers

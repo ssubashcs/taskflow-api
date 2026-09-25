@@ -1,6 +1,8 @@
 
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TaskFlow.Api.Data;
+using TaskFlow.Api.Models;
 using TaskFlow.Api.Services;
 
 namespace TaskFlow.Api
@@ -25,6 +27,11 @@ namespace TaskFlow.Api
             // Register TaskService as the implementation for ITaskService with scoped lifetime.                                                                
             builder.Services.AddScoped<ITaskService, TaskService>();
 
+            // uses dependency injection to provide a password-hashing service wherever needed
+            builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
+            builder.Services.AddScoped<IAuthService, AuthService>();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -36,7 +43,6 @@ namespace TaskFlow.Api
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
 
             app.MapControllers();
 
