@@ -17,13 +17,26 @@ namespace TaskFlow.Api.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<UserResponseDto?>> Register(RegisterRequestDto requestDto)
+        public async Task<ActionResult<UserResponseDto>> Register(RegisterRequestDto registerRequest)
         {
-            var user = await _authService.RegisterAsync(requestDto);
+            var user = await _authService.RegisterAsync(registerRequest);
 
             if (user is null) return Conflict("An account with this email already exists.");
 
             return StatusCode(StatusCodes.Status201Created, user);
+        }
+
+        [HttpPost("login")]
+        public async Task<ActionResult<LoginResponseDto>> Login(LoginRequestDto loginRequest)
+        {
+            var loginResponse = await _authService.LoginAsync(loginRequest);
+
+            if (loginResponse is null)
+            {
+                return Unauthorized("Invalid email or password.");
+            }
+
+            return Ok(loginResponse);
         }
     }
 }

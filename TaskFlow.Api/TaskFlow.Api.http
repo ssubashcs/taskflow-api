@@ -35,6 +35,15 @@ POST https://localhost:7152/api/auth/register
 Content-Type: application/json
 
 {
+  "email": "programmer@abc.com",
+  "password": "pass123_"
+}
+
+###
+POST https://localhost:7152/api/auth/login
+Content-Type: application/json
+
+{
   "email": "learner@example.com",
   "password": "LearningPassword123!"
 }

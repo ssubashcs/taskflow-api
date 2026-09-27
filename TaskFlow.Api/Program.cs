@@ -1,6 +1,9 @@
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using TaskFlow.Api.Data;
 using TaskFlow.Api.Models;
 using TaskFlow.Api.Services;
@@ -29,8 +32,39 @@ namespace TaskFlow.Api
 
             // uses dependency injection to provide a password-hashing service wherever needed
             builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
-
+ 
             builder.Services.AddScoped<IAuthService, AuthService>();
+
+            // Configure token validation
+            var jwtKey = builder.Configuration["Jwt:Key"] ?? 
+                                    throw new InvalidOperationException("JWT signing key is not configured.");
+
+            var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? 
+                                        throw new InvalidOperationException("JWT issuer is not configured.");
+
+            var jwtAudience = builder.Configuration["Jwt:Audience"] ?? 
+                                            throw new InvalidOperationException("JWT audience is not configured.");
+
+            // Register authentication and authorization
+            // Anyone who bears/carries this token can use it to authenticate.
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => 
+                                options.TokenValidationParameters = new TokenValidationParameters()
+                                {
+                                    ValidateIssuer = true, ValidIssuer = jwtIssuer, 
+
+                                    ValidateAudience = true, ValidAudience = jwtAudience,
+
+                                    ValidateIssuerSigningKey = true, 
+                                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+
+                                    ValidateLifetime = true
+                                });
+
+            builder.Services.AddAuthorization();
+
+            // Singleton, because this service is stateless it does not hold request-specific data or a database context.
+            // It only reads configuration and creates tokens.
+            builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
             var app = builder.Build();
 
@@ -42,6 +76,8 @@ namespace TaskFlow.Api
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
+            // checks whether the user is allowed to access an endpoint
             app.UseAuthorization();
 
             app.MapControllers();
