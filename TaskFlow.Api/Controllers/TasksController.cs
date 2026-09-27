@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TaskFlow.Api.Dtos;
 using TaskFlow.Api.Services;
 
 namespace TaskFlow.Api.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class TasksController : ControllerBase
@@ -19,7 +22,12 @@ namespace TaskFlow.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<List<TaskResponseDto>>> GetAll()
         {
-            var tasks = await _taskService.GetAllAsync();
+            if (!TryGetCurrentUserId(out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var tasks = await _taskService.GetAllAsync(userId);
         
             return Ok(tasks);
         }
@@ -27,7 +35,12 @@ namespace TaskFlow.Api.Controllers
         [HttpGet("{id:int}", Name = "GetTaskById")]
         public async Task<ActionResult<TaskResponseDto>> GetById(int id)
         {
-            var task = await _taskService.GetByIdAsync(id);
+            if (!TryGetCurrentUserId(out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var task = await _taskService.GetByIdAsync(userId, id);
 
             if (task is null) return NotFound();
 
@@ -37,7 +50,12 @@ namespace TaskFlow.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<TaskResponseDto>> Create(TaskCreateDto taskDto)
         {
-            var task = await _taskService.CreateAsync(taskDto);
+            if (!TryGetCurrentUserId(out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var task = await _taskService.CreateAsync(userId, taskDto);
 
             return CreatedAtRoute("GetTaskById", new { id = task.Id }, task);
         }
@@ -46,7 +64,12 @@ namespace TaskFlow.Api.Controllers
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, TaskUpdateDto taskDto)
         {
-            bool updated = await _taskService.UpdateAsync(id, taskDto);
+            if (!TryGetCurrentUserId(out var userId))
+            {
+                return Unauthorized();
+            }
+
+            bool updated = await _taskService.UpdateAsync(userId, id, taskDto);
 
             if (!updated) return NotFound();
 
@@ -56,11 +79,21 @@ namespace TaskFlow.Api.Controllers
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
-            bool deleted = await _taskService.DeleteAsync(id);
+            if (!TryGetCurrentUserId(out var userId))
+            {
+                return Unauthorized();
+            }
+
+            bool deleted = await _taskService.DeleteAsync(userId, id);
 
             if (!deleted) return NotFound();
 
             return NoContent();
+        }
+
+        private bool TryGetCurrentUserId(out int userId)
+        {
+            return int.TryParse(HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier), out userId);
         }
     }
 }

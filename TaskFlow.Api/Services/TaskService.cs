@@ -14,12 +14,13 @@ namespace TaskFlow.Api.Services
             _dbContext = dbContext;
         }
 
-        public async Task<TaskResponseDto> CreateAsync(TaskCreateDto taskDto)
+        public async Task<TaskResponseDto> CreateAsync(int userId, TaskCreateDto taskDto)
         {
             TaskItem task = new()
             {
                 Title = taskDto.Title,
-                IsCompleted = false
+                IsCompleted = false,
+                UserId = userId
             };
 
             _dbContext.Tasks.Add(task);
@@ -28,9 +29,11 @@ namespace TaskFlow.Api.Services
             return ToResponseDto(task);
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int userId, int taskId)
         {
-            TaskItem? task = await _dbContext.Tasks.FindAsync(id);
+            TaskItem? task = await _dbContext.Tasks.FirstOrDefaultAsync(existingTask =>
+                                                        existingTask.Id == taskId &&
+                                                        existingTask.UserId == userId);
 
             if (task is null) return false;
 
@@ -40,9 +43,10 @@ namespace TaskFlow.Api.Services
             return true;
         }
 
-        public async Task<List<TaskResponseDto>> GetAllAsync()
+        public async Task<List<TaskResponseDto>> GetAllAsync(int userId)
         {
             return await _dbContext.Tasks.AsNoTracking()
+                                              .Where(task => task.UserId == userId)
                                               .Select(task => new TaskResponseDto()
                                                         {
                                                             Id = task.Id, 
@@ -52,17 +56,19 @@ namespace TaskFlow.Api.Services
                                                         .ToListAsync();
         }
 
-        public async Task<TaskResponseDto?> GetByIdAsync(int id)
+        public async Task<TaskResponseDto?> GetByIdAsync(int userId, int taskId)
         {
-            var task = await _dbContext.Tasks.FindAsync(id);
+            var task = await _dbContext.Tasks.FirstOrDefaultAsync(task => task.Id == taskId && task.UserId == userId);
 
             return task is null ? null : ToResponseDto(task);
         }
 
-        public async Task<bool> UpdateAsync(int id, TaskUpdateDto taskDto)
+        public async Task<bool> UpdateAsync(int userId, int taskId, TaskUpdateDto taskDto)
         {
             // reference to the tracked entity object retrieved by ef core
-            TaskItem? task = await _dbContext.Tasks.FindAsync(id);
+            TaskItem? task = await _dbContext.Tasks.FirstOrDefaultAsync(existingTask => 
+                                                        existingTask.Id == taskId &&
+                                                        existingTask.UserId == userId);
 
             if (task is null) return false;
 

@@ -11,12 +11,12 @@ POST https://localhost:7152/api/tasks
 Content-Type: application/json
 
 {
-  "title": "Test2",
-  "isCompleted": true
+  "title": "Add user registration"
 }
 
 ###
-GET https://localhost:7152/api/tasks/1
+GET https://localhost:7152/api/tasks/7
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjMiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJwcm9ncmFtbWVyLmNAYWJjLmNvbSIsImV4cCI6MTc5MDUzMTYyOCwiaXNzIjoiVGFza0Zsb3cuQXBpIiwiYXVkIjoiVGFza0Zsb3cuQXBpLkNsaWVudCJ9.CHJzXpnmVxwSPHXYwbw3nG4xsRODSkaNZrTbxD2Ikd4
 
 ###
 PUT https://localhost:7152/api/tasks/4
@@ -46,4 +46,13 @@ Content-Type: application/json
 {
   "email": "learner@example.com",
   "password": "LearningPassword123!"
+}
+
+###
+POST https://localhost:7152/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "programmer.c@abc.com",
+  "password": "passc3"
 }

@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Api.Dtos;
 using TaskFlow.Api.Services;
 
 namespace TaskFlow.Api.Controllers
 {
     // [controller] is replaced by the controller's name without Controller.
+    [AllowAnonymous]
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
