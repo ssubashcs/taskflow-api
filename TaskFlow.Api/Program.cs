@@ -66,6 +66,9 @@ namespace TaskFlow.Api
             // It only reads configuration and creates tokens.
             builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
 
+            // creates standardized JSON error responses.
+            builder.Services.AddProblemDetails();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -75,6 +78,11 @@ namespace TaskFlow.Api
             }
 
             app.UseHttpsRedirection();
+
+            // catches unhandled exceptions across the application.
+            app.UseExceptionHandler();
+            // helps generate bodies for status-code responses that otherwise have no body.
+            app.UseStatusCodePages();
 
             app.UseAuthentication();
             // checks whether the user is allowed to access an endpoint

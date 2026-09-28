@@ -9,9 +9,12 @@ namespace TaskFlow.Api.Services
     {
         private readonly TaskFlowDbContext _dbContext;
 
-        public TaskService(TaskFlowDbContext dbContext)
+        private readonly ILogger<TaskService> _logger;
+
+        public TaskService(TaskFlowDbContext dbContext, ILogger<TaskService> logger)
         {
             _dbContext = dbContext;
+            _logger = logger;
         }
 
         public async Task<TaskResponseDto> CreateAsync(int userId, TaskCreateDto taskDto)
@@ -26,21 +29,9 @@ namespace TaskFlow.Api.Services
             _dbContext.Tasks.Add(task);
             await _dbContext.SaveChangesAsync();
 
+            _logger.LogInformation("Task {TaskId} created for user {UserId}.", task.Id, userId);
+
             return ToResponseDto(task);
-        }
-
-        public async Task<bool> DeleteAsync(int userId, int taskId)
-        {
-            TaskItem? task = await _dbContext.Tasks.FirstOrDefaultAsync(existingTask =>
-                                                        existingTask.Id == taskId &&
-                                                        existingTask.UserId == userId);
-
-            if (task is null) return false;
-
-            _dbContext.Tasks.Remove(task);
-            await _dbContext.SaveChangesAsync();
-
-            return true;
         }
 
         public async Task<List<TaskResponseDto>> GetAllAsync(int userId)
@@ -76,6 +67,24 @@ namespace TaskFlow.Api.Services
             task.IsCompleted = taskDto.IsCompleted;
 
             await _dbContext.SaveChangesAsync();
+
+            _logger.LogInformation("Task {TaskId} updated for user {UserId}.", task.Id, userId);
+
+            return true;
+        }
+
+        public async Task<bool> DeleteAsync(int userId, int taskId)
+        {
+            TaskItem? task = await _dbContext.Tasks.FirstOrDefaultAsync(existingTask =>
+                                                        existingTask.Id == taskId &&
+                                                        existingTask.UserId == userId);
+
+            if (task is null) return false;
+
+            _dbContext.Tasks.Remove(task);
+            await _dbContext.SaveChangesAsync();
+
+            _logger.LogInformation("Task {TaskId} deleted for user {UserId}.", task.Id, userId);
 
             return true;
         }
